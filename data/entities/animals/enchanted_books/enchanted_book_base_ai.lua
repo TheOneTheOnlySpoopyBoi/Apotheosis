@@ -4,12 +4,14 @@ dofile_once("mods/Apotheosis/lib/Apotheosis/apotheosis_utils.lua")
 local entity_id = GetUpdatedEntityID()
 local pos_x,pos_y,rotation,scale_x,scale_y = EntityGetTransform(entity_id)
 local book_attack_state_timeout = 1800 --If the book is in its attack state for longer than 30 seconds, tell it to close
+local book_attack_state_timeout_short = 600 --If the book is using a charged attack with a dazzling glow, only let the book remain open for 10 seconds at most instead
 
 local vsc_comps = EntityGetComponentIncludingDisabled(entity_id,"VariableStorageComponent")
 local state_data = vsc_comps[2]
 local target_data = vsc_comps[3]
 local attack_data_1 = vsc_comps[4]
 local attack_data_2 = vsc_comps[5]
+local target_data_2 = vsc_comps[6]
 
 --State data
 local book_states = {
@@ -25,7 +27,8 @@ local is_ai_disabled = ComponentGetValue2(state_data,"value_bool")
 --Targetting data
 local current_target = ComponentGetValue2(target_data,"value_int")
 local ctarg_x,ctarg_y = 0,0
-local target_last_pos = ComponentGetValue2(target_data,"value_string") or "0,0"
+local target_last_pos_x = ComponentGetValue2(target_data,"value_float")
+local target_last_pos_y = ComponentGetValue2(target_data_2,"value_float")
 local default_rotation = 0
 local rotation_goal = default_rotation
 local default_rotation_speed = 0.06
@@ -89,14 +92,15 @@ function scanForTarget()
     --Get a target
     local animal_ai_comp = EntityGetFirstComponentIncludingDisabled(entity_id,"AnimalAIComponent")
     current_target = ComponentGetValue2(animal_ai_comp,"mGreatestPrey") or ComponentGetValue2(animal_ai_comp,"mGreatestThreat") or 0
-    if EntityGetIsAlive(current_target) == false and current_target ~= 0 then current_target = 0 ComponentSetValue2(target_data,"value_string","0,0") end
+    if EntityGetIsAlive(current_target) == false and current_target ~= 0 then current_target = 0 ComponentSetValue2(target_data,"value_float",0) ComponentSetValue2(target_data_2,"value_float",0) end
 
     if current_target ~= 0 then
         ctarg_x,ctarg_y = EntityGetTransform(current_target)
-        ComponentSetValue2(target_data,"value_string",table.concat({ctarg_x,",",ctarg_y}))
-    elseif type(target_last_pos) == "table" then
-        ctarg_x = target_last_pos[1]
-        ctarg_y = target_last_pos[2]
+        ComponentSetValue2(target_data,"value_float",ctarg_x)
+        ComponentSetValue2(target_data_2,"value_float",ctarg_y)
+    elseif target_last_pos_x ~= 0 or target_last_pos_y ~= 0 then
+        ctarg_x = target_last_pos_x
+        ctarg_y = target_last_pos_y
     end
 
     local spin_speed = attack_data.attack_data_table.spin_speed or 0
@@ -254,7 +258,7 @@ function bookStateUpdate()
             select_new_attack()
         elseif current_state == book_states.opening then
             playAnimation("open")
-            ComponentSetValue2(state_data,"value_float",current_frame + book_attack_state_timeout)
+            ComponentSetValue2(state_data,"value_float",current_frame + ((attack_data.attack_data_table.give_warning and attack_data.attack_data_table.continous_warning ~= true) and book_attack_state_timeout_short or book_attack_state_timeout))
             ComponentSetValue2(state_data,"value_int",book_states.open)
 
             --ComponentSetValue2(EntityGetFirstComponentIncludingDisabled(entity_id,"AnimalAIComponent"), "attack_ranged_enabled", true)

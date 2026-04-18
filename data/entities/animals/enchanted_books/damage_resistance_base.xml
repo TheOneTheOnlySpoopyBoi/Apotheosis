@@ -67,5 +67,12 @@
 		value_string="mini_sun"
 		>
 	</VariableStorageComponent>
+
+	<VariableStorageComponent
+		name="target_data_2"
+		value_int="0"
+		value_float="0"
+		>
+	</VariableStorageComponent>
 </Entity>
 

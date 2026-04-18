@@ -1,6 +1,5 @@
 <Entity name="$enemy_apotheosis_enchanted_book_fire" tags="monk_hand,polymorphable_NOT,touchmagic_immunity,curse_NOT,weaken_NOT,no_swap">
 
-	<Entity> <Base file="data/entities/animals/enchanted_books/drop_loot_base.xml" > </Base> </Entity>
 	<Base file="data/entities/animals/enchanted_books/enchanted_book_base.xml" >
 		<ItemChestComponent level="2" > </ItemChestComponent>
 
